@@ -14,7 +14,7 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Trang Chủ', path: '/' },
         { name: 'Khách sạn', path: '/rooms' },
-        { name: 'Trải Nghiệm', path: '/' },
+        { name: 'Hỗ trợ khách hàng', path: '/support' },
         { name: 'Về TL-Stay', path: '/about' },
     ];  
 
