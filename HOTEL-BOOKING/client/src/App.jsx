@@ -24,6 +24,8 @@ import ListRoom from './pages/hotelOwner/ListRoom';
 import AddOffer from "./pages/hotelOwner/AddOffer";
 import ListOffer from "./pages/hotelOwner/ListOffer";
 import EditOffer from "./pages/hotelOwner/EditOffer";
+import SupportChat from './pages/SupportChat';
+
 
 
 import { useAppContext } from './context/AppContext';
@@ -52,6 +54,7 @@ const App = () => {
           <Route path='/offer/:id' element={<OfferDetail />} />
           <Route path='/about' element={<AboutTLStay />} />
           <Route path='/customer-service' element={<CustomerService />} />
+          <Route path='/support' element={<SupportChat />} />
 
           {}
           <Route path='/owner' element={<Layout />}>

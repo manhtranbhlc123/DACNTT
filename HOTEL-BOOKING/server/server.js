@@ -20,6 +20,11 @@ import offerRoutes from "./routes/offerRoutes.js";
 
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 
+import { Webhook } from "svix";
+import User from './models/User.js';
+
+
+
 
 // ================= DB =================
 connectDB();
@@ -43,41 +48,52 @@ const io = new Server(httpServer, {
 });
 
 // ================= CLERK WEBHOOK =================
-const { Webhook } = require('svix');
-const User = require('./models/User'); // Lưu ý: Đổi lại đường dẫn import model User cho khớp với cấu trúc thư mục của bạn
 
 app.post(
   "/api/webhooks/clerk",
   express.raw({ type: "application/json" }),
   async (req, res) => {
-    const payload = req.body;
-    const headers = req.headers;
-    
-    // Lấy chuỗi bảo mật từ biến môi trường của Render
-    const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
-    
+
     try {
-      // Xác thực request
-      const evt = wh.verify(payload, headers);
-      
-      // Nếu là sự kiện tạo tài khoản mới
-      if (evt.type === 'user.created') {
-        const { id, email_addresses, first_name, last_name } = evt.data;
-        
-        // Lưu vào MongoDB
+
+      const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+
+      const evt = wh.verify(req.body, {
+        "svix-id": req.headers["svix-id"],
+        "svix-timestamp": req.headers["svix-timestamp"],
+        "svix-signature": req.headers["svix-signature"],
+      });
+
+      console.log("Webhook Event:", evt.type);
+
+      if (evt.type === "user.created") {
+
+        const { id, first_name, last_name, email_addresses, image_url } = evt.data;
+
         const newUser = new User({
-          clerkId: id,
+          _id: id,
+          username: `${first_name || ""} ${last_name || ""}`.trim(),
           email: email_addresses[0].email_address,
-          name: `${first_name || ''} ${last_name || ''}`.trim(),
+          image: image_url,
+          recentSearchedCities: []
         });
+
         await newUser.save();
-        console.log("Đã đồng bộ user mới từ Clerk sang MongoDB");
+
+        console.log("✅ User saved");
       }
-      
-      res.status(200).json({ success: true });
+
+      res.status(200).json({
+        success: true
+      });
+
     } catch (err) {
-      console.log('Webhook verification failed', err.message);
-      res.status(400).json({ success: false, message: 'Lỗi xác thực Clerk' });
+
+      console.log(err.message);
+
+      res.status(400).json({
+        success: false
+      });
     }
   }
 );
@@ -142,7 +158,6 @@ app.use(clerkMiddleware());
 
 
 // ================= ROUTES =================
-app.use("/api/clerk", clerkWebhooks);
 
 app.use("/api/user", userRouter);
 
